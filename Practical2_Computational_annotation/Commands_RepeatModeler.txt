@@ -1,0 +1,36 @@
+perl# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Physalia Course on Transposable Elements
+# April 23-27, 2018, Berlin
+# Alexander Suh, Uppsala University
+# alexander.suh@ebc.uu.se, http://genomicrocosm.wordpress.com
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+# Practical 2: Commands for running RepeatModeler
+
+# Note: Due to time limitations, RepeatModeler was pre-run on the UPPMAX server (16 cores).
+
+# Program version: RepeatModeler/1.0.8_RM4.0.7
+
+### Example for Ramazzottius varieornatus (Rvar4.0) used in course demonstration.
+
+# Download assembly from NCBI:
+wget ftp://ftp.ncbi.nlm.nih.gov/genomes/genbank/invertebrate/Ramazzottius_varieornatus/all_assembly_versions/GCA_001949185.1_Rvar_4.0/GCA_001949185.1_Rvar_4.0_genomic.fna.gz
+
+# Unzip assembly:
+gunzip GCA_001949185.1_Rvar_4.0_genomic.fna.gz
+
+# Shorten FASTA headers at first occurrence of " ":
+perl shortenScaffoldnames.pl GCA_001949185.1_Rvar_4.0_genomic.fna.gz Rvar4.0.fa
+
+# Run RepeatModeler using 16 cores (runtime approx. 8 hours on 100-Mb genome):
+[path_to_RepeatModeler]/BuildDatabase -name Rvar4.0 -engine ncbi Rvar4.0.fa
+[path_to_RepeatModeler]/RepeatModeler -pa 16 -database Rvar4.0
+
+### Example for Hypsibius dujardini (nHd3.1; run before the start of the course) for the next steps.
+
+# Copy output files into folder with informative name:
+mkdir nHd3.1_rmodel
+cp RM_*/consensi.fa* nHd3.1_rmodel/
+
+# Rename RepeatModeler output sequences using a unique species identifier:
+perl renameRMDLconsensi.pl nHd3.1_rmodel/consensi.fa.classified nHd nHd3.1_rmodel/nHd_rm1.0.lib

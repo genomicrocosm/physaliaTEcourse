@@ -1,0 +1,66 @@
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Physalia Course on Transposable Elements
+# April 23-27, 2018, Berlin
+# Alexander Suh, Uppsala University
+# alexander.suh@ebc.uu.se, http://genomicrocosm.wordpress.com
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+# Practical 3: Commands for running repeatModelerPipeline
+
+# Note: Due to time limitations, repeatModelerPipeline was pre-run on the UPPMAX server (8 cores).
+
+# Note: This is an in-house pipeline for collecting 20 best BLASTn hits per raw RepeatModeler consensus, adding 2-kb flanks on each side, and generating one alignment per consensus. BLASTn results are collected in the subfolder "blast" and alignments are saved in the subfolder "aligned".
+
+# Default settings are 20 hits and 2-kb flanks (can be changed in repeatModelerPipeline4.pl itself).
+
+# If there are issues with running this on your computing environment, try alternative pipelines such as Process_hits (https://bmcresnotes.biomedcentral.com/articles/10.1186/1756-0500-4-482).
+
+# Program version: repeatModelerPipeline4.pl
+
+# Make a copy of nHd_rm1.0.lib without "/" to be compatible with repeatModelerPipeline (sequence names are used as alignment file names):
+sed 's|/|_|g' nHd_rm1.0.lib >nHd_rm1.0_noSlash.lib
+
+# Make BLASTn database:
+mkdir repeatModelerPipeline
+cd repeatModelerPipeline
+makeblastdb -in "../nHd3.1.fa" -title nHd3.1 -dbtype "nucl" -parse_seqids -out nHd3.1
+
+# Run repeatModelerPipeline:
+perl repeatModelerPipeline4.pl ../nHd3.1.fa nHd3.1 ../nHd3.1_rmodel/nHd_rm1.0_noSlash.lib
+
+### If repeatModelerPipeline ran successfully, time to do post-processing of files. Processed files will be saved in folder "final".
+
+# Cleanup of temporary files:
+rm *emp.out
+mkdir final
+
+# Remove redundant sequences from alignments and save in folder "final":
+cd aligned; for i in $(ls *.fa); do name=`ls $i | cut -f1 -d "."`; cat $i |perl -ne 'chomp;s/>\s+/>/;if(/>(\S+)/){$id{$1}++;$id2=$1;}if($id{$id2}==1){print "$_\n"}' >../final/$name.fa; done; cd ../
+
+### If repeatModelerPipeline crashed halfway (which sometimes happens for memory reasons during the alignment step), proceed as follows:
+
+# Change repeatModelerPipeline4.pl itself by adding a "#" in the beginning of line 48 and line 51.
+
+# Move already processed "blastn" files and "aligned" files as shown below.
+
+# Rename aligned folder and make a list of file names:
+mv aligned >aligned_part1
+ls aligned_part1 >aligned_part1.list
+mkdir blastn_part1
+
+# Match blastn files from file name list and copy/move these into a separate blastn folder:
+cat aligned_part1.list | while read line; do  name==`echo $line`; mv blastn/$line blastn_part1/; done
+
+# Now re-start repeatModelerPipeline with a larger memory allocation.
+
+### If helpful, make alignments less gappy with T-Coffee, e.g., version T-Coffee/11.00.8cbe486
+
+
+
+# Remove alignment positions with gaps in more than 90% of the sequences:
+
+cd final
+export CACHE_4_TCOFFEE=[path_to_your_bin]
+for i in $(ls *.fa); do name=`ls $i | cut -f1 -d "."`; [path_to_T-COFFEE]t_coffee -other_pg seq_reformat -in $i -action +rm_gap 90 >$name.nogaps90.fa; done
+
+# Note: Make sure to keep the original alignments for your records and for double-checking in case something looks fishy in the less gappy alignments.

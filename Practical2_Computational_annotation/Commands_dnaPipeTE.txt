@@ -1,0 +1,24 @@
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Physalia Course on Transposable Elements
+# April 23-27, 2018, Berlin
+# Alexander Suh, Uppsala University
+# alexander.suh@ebc.uu.se, http://genomicrocosm.wordpress.com
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+# Practical 2: Commands for running dnaPipeTE
+
+# Program version: dnaPipeTE_v1.3
+
+# First do a test run with the dnaPipeTE test dataset: 
+cd /home/ubuntu/dnaPipeTE/
+source ~/.bashrc
+python3 ./dnaPipeTE.py -input ./test/test_dataset.fastq -output [path_to_your_folder] -genome_size 2000000 -genome_coverage 0.5 -sample_number 2 >[path_to_your_folder]/dnaPipeTE.log
+
+# Inspect the dnaPipeTE.log for error messages. If everything is fine, proceed as follows:
+
+# The H. dujardini raw reads need to be downloaded from Short Read Archive using SRA tools:
+fastq-dump -A [SRA_accession] --split-files --gzip
+
+# For dnaPipeTE parameters, we assume a genome size of 100 Mb and aim for a coverage of 0.1x.
+
+# Before running dnaPipeTE using the customized dataset and parameters, check if /home/ubuntu/dnaPipeTE/config.sh contains the path to nHd_rm1.0_arthropods.lib as the RepeatMasker library. If it doesn't, edit the config.sh file accordingly.

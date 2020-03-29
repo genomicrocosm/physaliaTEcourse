@@ -1,0 +1,62 @@
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Physalia Course on Transposable Elements
+# April 23-27, 2018, Berlin
+# Alexander Suh, Uppsala University
+# alexander.suh@ebc.uu.se, http://genomicrocosm.wordpress.com
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+# Practical 2: Commands for running RepeatMasker
+
+# Note: Due to time limitations, RepeatMasker will be run on the UPPMAX server (16 cores) instead of the Amazon cloud.
+
+# Program version: RepeatMasker/4.0.6
+
+# Make a custom repeat library using RepeatModeler output and Repbase repeats:
+perl [path_to_RepeatMasker]/util/queryRepeatDatabase.pl -species Arthropoda >ArthropodaRepbase.lib
+cat nHd_rm1.0.lib ArthropodaRepbase.lib >nHd_rm1.0_arthropods.lib
+
+# Run RepeatMasker on Repbase library using 16 cores (runtime approx. 40 minutes for a 100-Mb genome):
+[path_to_RepeatMasker]/RepeatMasker -pa 16 -a -xsmall -gccalc -species Arthropoda nHd3.1.fa
+
+# Run RepeatMasker on custom library using 16 cores (runtime approx. 40 minutes for a 100-Mb genome):
+[path_to_RepeatMasker]/RepeatMasker -pa 16 -a -xsmall -gccalc -lib nHd_rm1.0_arthropods.lib nHd3.1.fa
+
+# Make RepeatMasker .align file and average divergence file, both with CpG-corrected divergence estimates (Kimura 2-parameter model):
+perl [path_to_RepeatMasker]/util/calcDivergenceFromAlign.pl -s nHd3.1.fa.align.divsum -a nHd3.1.fa.align_with_div nHd3.1.fa.align
+
+# Make repeat landscape from CpG-corrected RepeatMasker .align file and average divergence file:
+perl [path_to_RepeatMasker]/util/createRepeatLandscape.pl -div nHd3.1.fa.align.divsum -g 104154999 >nHd3.1.fa.align.divsum.html
+
+# Make CpG-corrected .out-like file with repeat copy size (column 8; largely identical to Repeatmasker .out file but without header and with possibly overlapping hits):
+awk '{if(index($12, "(") != 0){print $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7"\t"$7-($6-1)"\t"$8"\t""+""\t"$9"\t"$10"\t"$11"\t"$12"\t"$13"\t"$14}else if(index($10, "(") != 0){print $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7"\t"$7-($6-1)"\t"$8"\t"$9"\t"$10"\t"$11"\t"$12"\t"$13"\t"$14"\t"$15}}' nHd3.1.fa.align.with_div |sed 's/#/\t/' >nHd3.1.fa.align.with_div.noCpG.size.out
+
+# Make 0-formatted bed file from 1-formatted RepeatMasker .out file (sequence, masking start, masking end):
+awk '(NR>3){$6=$6-1; print $5"\t"$6"\t"$7}' nHd3.1.fa.out >nHd3.1.fa.out.bed
+
+# Make bed6 file from RepeatMasker .out file (bed file with TE information):
+awk '(NR>3){$6=$6-1; print $5"\t"$6"\t"$7"\t"$10"\t"$11"\t"$9}' nHd3.1.fa.out >nHd3.1.fa.out.bed6
+
+# Make a hard-masked (NNN) version of the soft-masked (lowercase) .masked file:
+perl -e 'while(<>) { if ($_ =~ /^>.*/) { print $_; } else { $_ =~ tr/acgt/N/; print $_;}}' < nHd3.1.fa.masked >nHd3.1.fa.masked.hard
+
+### Programs in RepeatMasker for downstream analyses:
+# DateRepeats
+# DupMasker
+# ProcessRepeats
+# RepeatMasker
+# RepeatProteinMask
+
+### Scripts in RepeatMasker/util for downstream analyses:
+# buildRMLibFromEMBL.pl
+# buildSummary.pl
+# calcDivergenceFromAlign.pl
+# createRepeatLandscape.pl
+# dupliconToSVG.pl
+# getRepeatMaskerBatch.pl
+# queryRepeatDatabase.pl
+# queryTaxonomyDatabase.pl
+# rmOut2Fasta.pl
+# rmOutToGFF3.pl
+# rmToUCSCTables.pl
+# trfMask
+# wublastToCrossmatch.pl
